@@ -383,9 +383,11 @@ public abstract class Compressor extends PlayPlugin {
             }
             BufferedReader reader = new BufferedReader(new InputStreamReader(file.inputStream()));
             String firstLine = reader.readLine();
-            Matcher matcher = HEADER_PATTERN.matcher(firstLine);
-            if (matcher.matches()) {
-                return true;
+            if (null != firstLine){
+                Matcher matcher = HEADER_PATTERN.matcher(firstLine);
+                if (matcher.matches()) {
+                    return true;
+                }
             }
             return false;
         } catch (IOException e) {
