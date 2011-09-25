@@ -96,19 +96,18 @@ public class OnDiskCompressedFile extends CompressedFile {
         String tmpPath = tmpOutputFile.getAbsolutePath();
         String finalPath = file.getRealFile().getAbsolutePath();
         PressLogger.trace(msg, tmpPath, finalPath);
-        if (!tmpOutputFile.renameTo(file.getRealFile())) {
-            String ex = "Successfully wrote compressed file to temporary path\n" + tmpPath;
-            ex += "\nBut could not move it to final path\n" + finalPath;
-            throw new PressException(ex);
-        }
-
         try {
-            tmpOutputFile = null;
             writer.flush();
             writer.close();
         } catch (IOException e) {
             throw new UnexpectedException(e);
         }
+        if (!tmpOutputFile.renameTo(file.getRealFile())) {
+            String ex = "Successfully wrote compressed file to temporary path\n" + tmpPath;
+            ex += "\nBut could not move it to final path\n" + finalPath;
+            throw new PressException(ex);
+        }
+        tmpOutputFile = null;
     }
 
     private static File getTmpOutputFile(VirtualFile file) {
