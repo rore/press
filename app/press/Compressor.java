@@ -108,6 +108,8 @@ public abstract class Compressor extends PlayPlugin {
         componentFiles.add(new FileInfo(compressedFileName, true, srcFile));
 
         // Check whether the compressed file needs to be generated
+        if (compressedDir.endsWith("/") && compressedFileName.startsWith("/"))
+        	compressedFileName = compressedFileName.substring(1);
         String outputFilePath = compressedDir + compressedFileName;
         CompressedFile outputFile = CompressedFile.create(outputFilePath);
         if (outputFile.exists() && useCache(componentFiles, outputFile, extension)) {
@@ -117,6 +119,10 @@ public abstract class Compressor extends PlayPlugin {
             // If so, generate it
             writeCompressedFile(compressor, componentFiles, outputFile);
         }
+
+    	if (press.PluginConfig.cacheBuster){
+    		outputFilePath += "?" + srcFile.lastModified();
+    	}
 
         return outputFilePath;
     }

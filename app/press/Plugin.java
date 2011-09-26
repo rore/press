@@ -240,9 +240,13 @@ public class Plugin extends PlayPlugin {
      * tags within the HTML.
      */
     private static String getScriptTag(String src) {
-        return "<script src=\"" + press.PluginConfig.contentHostingDomain + src
-                + "\" type=\"text/javascript\" language=\"javascript\" charset=\"utf-8\">"
-                + "</script>\n";
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("<script src=\"");
+    	if (null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
+    		sb.append(press.PluginConfig.contentHostingDomain);
+    	sb.append(src);
+    	sb.append("\" type=\"text/javascript\" language=\"javascript\" charset=\"utf-8\"></script>\n");
+    	return sb.toString();
     }
 
     /**
@@ -250,7 +254,15 @@ public class Plugin extends PlayPlugin {
      * within the HTML.
      */
     private static String getLinkTag(String src) {
-        return "<link href=\"" + press.PluginConfig.contentHostingDomain + src + "\" rel=\"stylesheet\" type=\"text/css\" charset=\"utf-8\">"
-                + (press.PluginConfig.htmlCompatible ? "" : "</link>") + "\n";
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("<link href=\"");
+    	if (null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
+    		sb.append(press.PluginConfig.contentHostingDomain);
+    	sb.append(src);
+    	sb.append("\" rel=\"stylesheet\" type=\"text/css\" charset=\"utf-8\">");
+    	if (!press.PluginConfig.htmlCompatible)
+    		sb.append("</link>");
+    	sb.append("\n");
+    	return sb.toString();
     }
 }
