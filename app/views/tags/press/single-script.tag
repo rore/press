@@ -12,8 +12,7 @@
  *
  *  See the plugin documentation for more information.
  *  
-}*
-%{
+}*%{
     ( _arg ) &&  ( _src = _arg);
     // compress defaults to true
     if(_compress == null) {
@@ -23,5 +22,4 @@
     if(! _src) {
         throw new play.exceptions.TagInternalException("src attribute cannot be empty for press.single-script tag");
     }
-}%
-${ press.Plugin.addSingleJS(_src, _dir, _compress) }
+}%${ press.Plugin.addSingleJS(_src, _dir, _compress) }

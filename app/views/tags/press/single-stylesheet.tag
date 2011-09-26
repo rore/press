@@ -12,12 +12,10 @@
  *
  *  See the plugin documentation for more information.
  *  
-}*
-%{
+}*%{
     ( _arg ) &&  ( _src = _arg);
     
     if(! _src) {
         throw new play.exceptions.TagInternalException("src attribute cannot be empty for press.single-stylesheet tag");
     }
-}%
-${ press.Plugin.addSingleCSS(_src) }
+}%${ press.Plugin.addSingleCSS(_src) }

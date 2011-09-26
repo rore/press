@@ -22,8 +22,7 @@
  *  Source css files MUST be in utf-8 format.
  *  See the plugin documentation for more information.
  *  
-}*
-%{
+}*%{
     ( _arg ) &&  ( _src = _arg);
     
     // compress defaults to true
@@ -35,5 +34,4 @@
         throw new play.exceptions.TagInternalException("src attribute cannot be empty for stylesheet tag");
     }
 
-}%
-${ press.Plugin.addCSS(_src, _compress) }
+}%${ press.Plugin.addCSS(_src, _compress) }

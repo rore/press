@@ -23,8 +23,7 @@
  *  Source script files MUST be in utf-8 format.
  *  See the plugin documentation for more information.
  *  
-}*
-%{
+}*%{
     ( _arg ) &&  ( _src = _arg);
     
     // compress defaults to true
@@ -36,5 +35,4 @@
         throw new play.exceptions.TagInternalException("src attribute cannot be empty for press.script tag");
     }
 
-}%
-${ press.Plugin.addJS(_src, _compress) }
+}%${ press.Plugin.addJS(_src, _compress) }

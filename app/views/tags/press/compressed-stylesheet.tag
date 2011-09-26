@@ -15,5 +15,4 @@
  *  Source css files MUST be in utf-8 format.
  *  See the plugin documentation for more information.
  *  
-}*
-${ press.Plugin.compressedCSSTag() }
+}*${ press.Plugin.compressedCSSTag() }
