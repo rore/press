@@ -94,7 +94,7 @@ public abstract class Compressor extends PlayPlugin {
      * have the same name as the original file with .min appended before the
      * extension. eg the compressed output of widget.js will be in widget.min.js
      */
-    public String compressedSingleFileUrl(FileCompressor compressor, String fileName) {
+    public String compressedSingleFileUrl(FileCompressor compressor, String fileName, String dir) {
         PressLogger.trace("Request to compress single file %s", fileName);
 
         int lastDot = fileName.lastIndexOf('.');
@@ -103,7 +103,7 @@ public abstract class Compressor extends PlayPlugin {
 
         // The process for compressing a single file is the same as for a group
         // of files, the list just has a single entry
-        VirtualFile srcFile = checkFileExists(fileName);
+        VirtualFile srcFile = checkFileExists(fileName, dir);
         List<FileInfo> componentFiles = new ArrayList<FileInfo>(1);
         componentFiles.add(new FileInfo(compressedFileName, true, srcFile));
 
@@ -514,6 +514,11 @@ public abstract class Compressor extends PlayPlugin {
      */
     public VirtualFile checkFileExists(String fileName) {
         return FileIO.checkFileExists(fileName, srcDir);
+    }
+    public VirtualFile checkFileExists(String fileName, String dir) {
+    	if (null == dir || dir.isEmpty())
+    		return checkFileExists(fileName);
+        return FileIO.checkFileExists(fileName, dir);
     }
 
     protected static class FileInfo implements Serializable {

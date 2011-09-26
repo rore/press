@@ -21,7 +21,7 @@ public class CSSCompressor extends Compressor {
     }
 
     public String compressedSingleFileUrl(String fileName) {
-        return compressedSingleFileUrl(cssFileCompressor, fileName);
+        return compressedSingleFileUrl(cssFileCompressor, fileName, null);
     }
 
     public static CompressedFile getCompressedFile(String key) {

@@ -24,8 +24,8 @@ public class JSCompressor extends Compressor {
                 " -->", PluginConfig.js.srcDir, PluginConfig.js.compressedDir);
     }
 
-    public String compressedSingleFileUrl(String fileName) {
-        return compressedSingleFileUrl(jsFileCompressor, fileName);
+    public String compressedSingleFileUrl(String fileName, String dir) {
+        return compressedSingleFileUrl(jsFileCompressor, fileName, dir);
     }
 
     public static CompressedFile getCompressedFile(String key) {
@@ -34,6 +34,12 @@ public class JSCompressor extends Compressor {
     
     public static VirtualFile checkJSFileExists(String fileName) {
         return FileIO.checkFileExists(fileName, PluginConfig.js.srcDir);
+    }
+
+    public static VirtualFile checkJSFileExists(String fileName, String dir) {
+    	if (null == dir || dir.isEmpty())
+    		return FileIO.checkFileExists(fileName, PluginConfig.js.srcDir);
+        return FileIO.checkFileExists(fileName, dir);
     }
 
     public static int clearCache() {

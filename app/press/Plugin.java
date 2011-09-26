@@ -6,6 +6,7 @@ import java.util.Map;
 
 import play.PlayPlugin;
 import play.mvc.Router;
+import play.vfs.VirtualFile;
 import press.io.FileIO;
 import press.io.PressFileGlobber;
 
@@ -39,19 +40,26 @@ public class Plugin extends PlayPlugin {
     /**
      * Add a single JS file to compression
      */
-    public static String addSingleJS(String fileName) {
-        checkJSFileExists(fileName);
+    public static String addSingleJS(String fileName, String dir, boolean compress) {
+        VirtualFile srcFile = checkJSFileExists(fileName, dir);
         JSCompressor compressor = jsCompressor.get();
         String src = null;
-        if (performCompression()) {
-            String requestKey = compressor.compressedSingleFileUrl(fileName);
+        if (compress && performCompression()) {
+            String requestKey = compressor.compressedSingleFileUrl(fileName, dir);
             if (PluginConfig.isInMemoryStorage()) {
                 src = getSingleCompressedJSUrl(requestKey);
             } else {
                 src = requestKey;
             }
         } else {
-            src = compressor.srcDir + fileName;
+        	if (null != dir && !dir.isEmpty())
+        		src = dir + fileName;
+        	else
+        		src = compressor.srcDir + fileName;
+        	if (press.PluginConfig.cacheBuster){
+        		src += "?" + srcFile.lastModified();
+        	}
+
         }
 
         return getScriptTag(src);
@@ -174,8 +182,12 @@ public class Plugin extends PlayPlugin {
     /**
      * Check if the given JS file exists.
      */
-    public static void checkJSFileExists(String fileName) {
-        JSCompressor.checkJSFileExists(fileName);
+    public static VirtualFile checkJSFileExists(String fileName) {
+        return JSCompressor.checkJSFileExists(fileName);
+    }
+
+    public static VirtualFile checkJSFileExists(String fileName, String dir) {
+        return JSCompressor.checkJSFileExists(fileName, dir);
     }
 
     /**
