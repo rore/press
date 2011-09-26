@@ -43,4 +43,8 @@ public abstract class CompressedFile {
     public abstract void close();
 
     public abstract long length();
+    
+    public abstract long lastModified();
+    
+    public abstract int originalHashCode();
 }

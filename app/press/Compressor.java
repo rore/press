@@ -173,19 +173,48 @@ public abstract class Compressor extends PlayPlugin {
     private String getRequestKey() {
         String key = "";
         for (Entry<String, FileInfo> entry : fileInfos.entrySet()) {
-            key += entry.getKey();
-            // If we use the 'Change' caching strategy, make the modified timestamp
-            // of each file part of the key.
-            if(PluginConfig.cache.equals(CachingStrategy.Change)) {
-                key += entry.getValue().getLastModified();
+            if (press.PluginConfig.serverFarm){
+            	if (key.length() > 0)
+            		key += ",";
+            	key += sanitizeKey(entry.getKey());
+                if(PluginConfig.cache.equals(CachingStrategy.Change)) {
+                    key += "|" + entry.getValue().getLastModified(); 
+                }
+            }
+            else{
+                key += entry.getKey();
+                // If we use the 'Change' caching strategy, make the modified timestamp
+                // of each file part of the key.
+                if(PluginConfig.cache.equals(CachingStrategy.Change)) {
+                    key += entry.getValue().getLastModified();
+                }
             }
         }
-
         // Get a hash of the url to keep it short
-        String hashed = Crypto.passwordHash(key);
-        return FileIO.lettersOnly(hashed);
+        if (press.PluginConfig.serverFarm){
+        	// if we're on multiple servers we can't rely on the cache key as the combined JS may not be generated yet
+        	return key;
+        }
+        else{
+            // Get a hash of the url to keep it short
+            String hashed = Crypto.passwordHash(key);
+            return FileIO.lettersOnly(hashed);
+        }
     }
 
+    private String sanitizeKey(String key) {
+    	if (null == key)
+    		return key;
+    	if (key.startsWith("/"))
+    		key = key.substring(1);
+    	if (key.endsWith(".js")){
+    		key = key.substring(0, key.length()-3);
+    	}
+    	else if (key.endsWith(".css")){
+    		key = key.substring(0, key.length()-4);
+    	}
+    	return key;
+    }
     public void saveFileList() {
         // If the request key has not been set, that means there was no request
         // for compressed source anywhere in the template file, so we don't
@@ -285,7 +314,30 @@ public abstract class Compressor extends PlayPlugin {
         // This shouldn't happen unless there was a very long delay between the
         // template being rendered and the compressed file being requested
         if (componentFiles == null) {
-            return null;
+        	// if we're on multi server farm, we might not have the key in the cache. in that case, build the file list from the key we got
+        	if (press.PluginConfig.serverFarm && null != key){
+        		componentFiles = new ArrayList<FileInfo>();
+        		String[] fileNames = key.split(",");
+        		if (null != fileNames){
+        			Compressor comp = null;
+        			if (extension.compareTo(JSCompressor.EXTENSION) == 0)
+        				comp = new JSCompressor();
+        			else
+        				comp = new CSSCompressor();
+        			for (String fileName : fileNames){
+        				String[] parts = fileName.split("\\|");
+        				if (null != parts && parts.length == 2){
+        					String name = parts[0];
+        					String timestamp = parts[1];
+        					name = "/" + name + extension;
+        					componentFiles.add(new FileInfo(name, true, comp.checkFileExists(name)));
+        				}
+        				comp.addFileListToCache(key, componentFiles);
+        			}
+        		}
+        	}
+        	if (null == componentFiles)
+        		return null;
         }
 
         return getCompressedFile(compressor, componentFiles, compressedDir, extension);

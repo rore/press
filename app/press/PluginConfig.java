@@ -40,6 +40,13 @@ public class PluginConfig {
         // Will be used to turn a relative URI into an absolute URL.
         public static final String contentHostingDomain = "";
 
+        // Is this a server farm with multiple servers. In this case we need to generate 
+        // different JS names, and support minification on the fly. 
+        public static final boolean serverFarm = false;
+
+        // Whether to append a cache buster (the file time) to the JS request 
+        public static final boolean cacheBuster = false;
+
         public static class js {
             // The directory where source javascript files are read from
             public static final String srcDir = "/public/javascripts/";
@@ -75,7 +82,9 @@ public class PluginConfig {
     public static int maxCompressionTimeMillis;
     public static boolean htmlCompatible;
     public static String contentHostingDomain;
-
+    public static boolean serverFarm;
+    public static boolean cacheBuster;
+    
     public static class js {
         public static String srcDir = DefaultConfig.js.srcDir;
         public static String compressedDir = DefaultConfig.js.compressedDir;
@@ -119,8 +128,9 @@ public class PluginConfig {
                 DefaultConfig.maxCompressionTimeMillis);
         htmlCompatible = ConfigHelper.getBoolean("press.htmlCompatible",
                 DefaultConfig.htmlCompatible);
-        contentHostingDomain = ConfigHelper.getString("press.contentHostingDomain",
-        		DefaultConfig.contentHostingDomain);
+        contentHostingDomain = ConfigHelper.getString("press.contentHostingDomain", DefaultConfig.contentHostingDomain);
+        serverFarm = ConfigHelper.getBoolean("press.serverFarm", DefaultConfig.serverFarm);
+        cacheBuster = ConfigHelper.getBoolean("press.cacheBuster", DefaultConfig.cacheBuster);
 
         css.srcDir = ConfigHelper.getString("press.css.sourceDir", DefaultConfig.css.srcDir);
         css.compressedDir = ConfigHelper.getString("press.css.outputDir",

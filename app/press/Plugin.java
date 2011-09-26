@@ -132,7 +132,7 @@ public class Plugin extends PlayPlugin {
     }
 
     /**
-     * Outputs the tag indicating where the compressed CSS should be included.
+     * Outputs the tag indicating where the compressed JS should be included.
      */
     public static String compressedJSTag() {
         if (performCompression()) {

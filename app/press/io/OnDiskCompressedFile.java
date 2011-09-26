@@ -182,4 +182,22 @@ public class OnDiskCompressedFile extends CompressedFile {
         return file.length();
     }
 
+    @Override
+    public long lastModified() {
+        if (!exists()) {
+            throw new PressException("Can't get lastModified. File does not exist");
+        }
+
+        return file.lastModified();
+    }
+
+    @Override
+    public int originalHashCode() {
+        if (!exists()) {
+            throw new PressException("Can't get originalHashCode. File does not exist");
+        }
+
+        return file.hashCode();
+    }
+
 }

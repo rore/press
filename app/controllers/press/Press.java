@@ -4,13 +4,19 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Date;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import play.Play;
 import play.exceptions.UnexpectedException;
 import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Request;
+import play.mvc.Http.Response;
+import play.utils.Utils;
 import press.CSSCompressor;
 import press.CachingStrategy;
 import press.JSCompressor;
@@ -20,6 +26,9 @@ import press.io.FileIO;
 
 public class Press extends Controller {
 	public static final DateTimeFormatter httpDateTimeFormatter = DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
+	
+	static boolean eTag_ = Play.configuration.getProperty("http.useETag", "true").equalsIgnoreCase("true");
+	
     public static void getCompressedJS(String key) {
         key = FileIO.unescape(key);
         CompressedFile compressedFile = JSCompressor.getCompressedFile(key);
@@ -48,7 +57,24 @@ public class Press extends Controller {
         if (compressedFile == null) {
             renderBadResponse(type);
         }
+        
+        // check for last modified
+        long l = compressedFile.lastModified();
+    	final String etag = "\"" + l + "-" + compressedFile.originalHashCode() + "\"";
 
+    	if (l > 0){
+    		// if the file is not modified, return 304
+            if (!request.isModified(etag, l)){
+                if (request.method.equalsIgnoreCase("GET")) {
+                	response.status = Http.StatusCode.NOT_MODIFIED;
+                    if (eTag_) {
+                    	response.setHeader("Etag", etag);
+                    }
+                }
+                return;
+            }
+        }
+        
         InputStream inputStream = compressedFile.inputStream();
 
         // This seems to be buggy, so instead of passing the file length we
@@ -77,6 +103,11 @@ public class Press extends Controller {
         if(PluginConfig.cache.equals(CachingStrategy.Change)) {
         	response.setHeader("Cache-Control", "max-age=" + 31536000); // A year
         	response.setHeader("Expires", httpDateTimeFormatter.print(new DateTime().plusYears(1)));
+        	response.setHeader("Last-Modified", Utils.getHttpDateFormatter().format(new Date(l + 1000)));
+            if (eTag_) {
+            	response.setHeader("Etag", etag);
+            }
+
         }
         
         renderBinary(inputStream, compressedFile.name());

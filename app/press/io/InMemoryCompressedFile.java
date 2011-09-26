@@ -167,4 +167,25 @@ public class InMemoryCompressedFile extends CompressedFile {
 
         return bytes.length;
     }
+    
+    @Override
+    public long lastModified() {
+        if (!exists()) {
+            throw new PressException("Can't get lastModified. File with key " + getCacheKey()
+                    + " does not exist in cache");
+        }
+
+        return 0;
+    }
+
+    @Override
+    public int originalHashCode() {
+        if (!exists()) {
+            throw new PressException("Can't get originalHashCode. File with key " + getCacheKey()
+                    + " does not exist in cache");
+        }
+
+        return bytes.hashCode();
+    }
+
 }
