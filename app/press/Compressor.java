@@ -255,20 +255,24 @@ public abstract class Compressor extends PlayPlugin {
             return;
         }
 
-        // The press tag may not always have been executed by the template
-        // engine in the same order that the resulting <script> tags would
-        // appear in the HMTL output. So here we scan the output to figure out
-        // in what order the <script> tags should actually be output.
-        long timeStart = System.currentTimeMillis();
-        List<FileInfo> orderedFileNames = getFileListOrder();
-        long timeAfter = System.currentTimeMillis();
-        PressLogger.trace("Time to scan response for %s files for '%s': %d milli-seconds",
-                fileType, Request.current().url, (timeAfter - timeStart));
+        // if serverFarm is enabled we create the request key in order, so we don't need to 
+        // parse again the result for getting the file order
+        if (!press.PluginConfig.serverFarm){
+            // The press tag may not always have been executed by the template
+            // engine in the same order that the resulting <script> tags would
+            // appear in the HMTL output. So here we scan the output to figure out
+            // in what order the <script> tags should actually be output.
+            long timeStart = System.currentTimeMillis();
+            List<FileInfo> orderedFileNames = getFileListOrder();
+            long timeAfter = System.currentTimeMillis();
+            PressLogger.trace("Time to scan response for %s files for '%s': %d milli-seconds",
+                    fileType, Request.current().url, (timeAfter - timeStart));
 
-        // Add the list of files to the cache.
-        // When the server receives a request for the compressed file, it will
-        // retrieve the list of files and compress them.
-        addFileListToCache(requestKey, orderedFileNames);
+            // Add the list of files to the cache.
+            // When the server receives a request for the compressed file, it will
+            // retrieve the list of files and compress them.
+            addFileListToCache(requestKey, orderedFileNames);
+        }
     }
 
     public List<FileInfo> getFileListOrder() {

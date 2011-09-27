@@ -3,7 +3,6 @@ package press;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-
 import play.PlayPlugin;
 import play.mvc.Router;
 import play.vfs.VirtualFile;
@@ -16,7 +15,8 @@ public class Plugin extends PlayPlugin {
     static ThreadLocal<Boolean> errorOccurred = new ThreadLocal<Boolean>();
     static ThreadLocal<Map<String, Boolean>> jsFiles = new ThreadLocal<Map<String, Boolean>>();
     static ThreadLocal<Map<String, Boolean>> cssFiles = new ThreadLocal<Map<String, Boolean>>();
-
+    static final int MAX_SRC_LEN = 600;
+    
     @Override
     public void onApplicationStart() {
         // Read the config each time the application is restarted
@@ -94,6 +94,8 @@ public class Plugin extends PlayPlugin {
         JSCompressor compressor = jsCompressor.get();
         String baseUrl = compressor.srcDir;
         String result = "";
+        if (press.PluginConfig.serverFarm && pos < 0)
+        	throw new PressException("serverFarm enabled and script position not specified in tag: " + src);
         for (String fileName : PressFileGlobber.getResolvedFiles(src, baseUrl)) {
             checkForJSDuplicates(fileName);
 
@@ -115,6 +117,8 @@ public class Plugin extends PlayPlugin {
         CSSCompressor compressor = cssCompressor.get();
         String baseUrl = compressor.srcDir;
         String result = "";
+        if (press.PluginConfig.serverFarm && pos < 0)
+        	throw new PressException("serverFarm enabled and stylesheet position not specified in tag: "+ src);
         for (String fileName : PressFileGlobber.getResolvedFiles(src, baseUrl)) {
             checkForCSSDuplicates(fileName);
 
@@ -134,9 +138,28 @@ public class Plugin extends PlayPlugin {
     public static String compressedCSSTag() {
         if (performCompression()) {
             String requestKey = cssCompressor.get().closeRequest();
-            return getLinkTag(getCompressedCSSUrl(requestKey));
+            return compressedCSSTag(requestKey);
         }
         return "";
+    }
+
+    public static String compressedCSSTag(String requestKey) {
+    	 if (performCompression()) {
+         	// if the src url is too long, break it
+         	if (press.PluginConfig.serverFarm && requestKey.length() > MAX_SRC_LEN){
+         		int pos = requestKey.lastIndexOf(",", MAX_SRC_LEN);
+         		if (pos > -1){
+         			String first = requestKey.substring(0, pos) + ".css";
+         			String rest = requestKey.substring(pos+1);
+         			String script = getScriptTag(getCompressedCSSUrl(first));
+         			if(null == rest || rest.length() == 0)
+         				return script;
+         			return script + compressedCSSTag(rest);
+         		}
+         	}
+             return getScriptTag(getCompressedCSSUrl(requestKey));
+         }
+         return "";
     }
 
     /**
@@ -145,6 +168,25 @@ public class Plugin extends PlayPlugin {
     public static String compressedJSTag() {
         if (performCompression()) {
             String requestKey = jsCompressor.get().closeRequest();
+            return compressedJSTag(requestKey);
+        }
+        return "";
+    }
+
+    public static String compressedJSTag(String requestKey) {
+        if (performCompression()) {
+        	// if the src url is too long, break it
+        	if (press.PluginConfig.serverFarm && requestKey.length() > MAX_SRC_LEN){
+        		int pos = requestKey.lastIndexOf(",", MAX_SRC_LEN);
+        		if (pos > -1){
+        			String first = requestKey.substring(0, pos) + ".js";
+        			String rest = requestKey.substring(pos+1);
+        			String script = getScriptTag(getCompressedJSUrl(first));
+        			if(null == rest || rest.length() == 0)
+        				return script;
+        			return script + compressedJSTag(rest);
+        		}
+        	}
             return getScriptTag(getCompressedJSUrl(requestKey));
         }
         return "";
