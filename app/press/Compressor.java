@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import play.PlayPlugin;
 import play.cache.Cache;
 import play.exceptions.UnexpectedException;
@@ -26,6 +26,7 @@ import play.mvc.Http.Request;
 import play.mvc.Http.Response;
 import play.templates.JavaExtensions;
 import play.vfs.VirtualFile;
+import press.Compressor.FileInfo;
 import press.io.CompressedFile;
 import press.io.FileIO;
 
@@ -105,7 +106,7 @@ public abstract class Compressor extends PlayPlugin {
         // of files, the list just has a single entry
         VirtualFile srcFile = checkFileExists(fileName, dir);
         List<FileInfo> componentFiles = new ArrayList<FileInfo>(1);
-        componentFiles.add(new FileInfo(compressedFileName, true, srcFile));
+        componentFiles.add(new FileInfo(compressedFileName, true, srcFile, -1));
 
         // Check whether the compressed file needs to be generated
         if (compressedDir.endsWith("/") && compressedFileName.startsWith("/"))
@@ -136,7 +137,7 @@ public abstract class Compressor extends PlayPlugin {
      * 
      * @return the file request signature to be output in the HTML
      */
-    public String add(String fileName, boolean compress) {
+    public String add(String fileName, boolean compress, int position) {
         if (compress) {
             PressLogger.trace("Adding %s to output", fileName);
         } else {
@@ -148,7 +149,7 @@ public abstract class Compressor extends PlayPlugin {
         }
 
         // Add the file to the list of files to be compressed
-        fileInfos.put(fileName, new FileInfo(fileName, compress, checkFileExists(fileName)));
+        fileInfos.put(fileName, new FileInfo(fileName, compress, checkFileExists(fileName), position));
 
         return getFileRequestSignature(fileName);
     }
@@ -178,16 +179,28 @@ public abstract class Compressor extends PlayPlugin {
      */
     private String getRequestKey() {
         String key = "";
-        for (Entry<String, FileInfo> entry : fileInfos.entrySet()) {
-            if (press.PluginConfig.serverFarm){
+        // for a farm we need to create the server list in order. we rely on the user to 
+        // specify the order in the tag as we can't count on play to call the tags in the order specified
+        // and we can't rely on the hash key if it comes to a different server
+        // so we want to be able to generate the combined file on the fly according to the explicitly set order
+        if (press.PluginConfig.serverFarm){
+        	TreeSet<FileInfo> sorted = new TreeSet<FileInfo>();
+            for (Entry<String, FileInfo> entry : fileInfos.entrySet()) {
+            	FileInfo fi = entry.getValue();
+            	sorted.add(fi);
+            }        	
+            // now create the key in order
+            for (FileInfo entry : sorted) {
             	if (key.length() > 0)
             		key += ",";
-            	key += sanitizeKey(entry.getKey());
+            	key += sanitizeKey(entry.fileName);
                 if(PluginConfig.cache.equals(CachingStrategy.Change)) {
-                    key += "|" + entry.getValue().getLastModified(); 
+                    key += "|" + entry.getLastModified(); 
                 }
             }
-            else{
+        }
+        else{
+            for (Entry<String, FileInfo> entry : fileInfos.entrySet()) {
                 key += entry.getKey();
                 // If we use the 'Change' caching strategy, make the modified timestamp
                 // of each file part of the key.
@@ -302,7 +315,7 @@ public abstract class Compressor extends PlayPlugin {
                 throw new PressException(msg);
             }
 
-            newList.add(new FileInfo(fileInfo.fileName, fileInfo.compress, file));
+            newList.add(new FileInfo(fileInfo.fileName, fileInfo.compress, file, -1));
         }
 
         // Add a mapping between the request key and the list of files that
@@ -336,7 +349,7 @@ public abstract class Compressor extends PlayPlugin {
         					String name = parts[0];
         					String timestamp = parts[1];
         					name = "/" + name + extension;
-        					componentFiles.add(new FileInfo(name, true, comp.checkFileExists(name)));
+        					componentFiles.add(new FileInfo(name, true, comp.checkFileExists(name),-1));
         				}
         				comp.addFileListToCache(key, componentFiles);
         			}
@@ -521,15 +534,27 @@ public abstract class Compressor extends PlayPlugin {
         return FileIO.checkFileExists(fileName, dir);
     }
 
-    protected static class FileInfo implements Serializable {
-        String fileName;
+    protected static class FileInfo implements Serializable, Comparable<FileInfo> {
+        @Override
+		public int compareTo(FileInfo o) {
+			if(null == o)
+				return -1;
+			// if it's the same position compare by name
+			if (this.position == o.position)
+				return this.fileName.compareTo(o.fileName);
+			return this.position.compareTo(o.position);
+		}
+
+		String fileName;
         boolean compress;
         private File file;
+        Integer position = -1;
 
-        public FileInfo(String fileName, boolean compress, VirtualFile file) {
+        public FileInfo(String fileName, boolean compress, VirtualFile file, int position) {
             this.fileName = fileName;
             this.compress = compress;
             this.file = file == null ? null : file.getRealFile();
+            this.position = position;
         }
 
         public long getLastModified() {

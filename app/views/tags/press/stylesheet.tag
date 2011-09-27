@@ -29,9 +29,12 @@
     if(_compress == null) {
       _compress = true;
     }
+    if(_pos == null) {
+      _pos = -1;
+    }
     
     if(! _src) {
         throw new play.exceptions.TagInternalException("src attribute cannot be empty for stylesheet tag");
     }
 
-}%${ press.Plugin.addCSS(_src, _compress) }
+}%${ press.Plugin.addCSS(_src, _compress, _pos) }

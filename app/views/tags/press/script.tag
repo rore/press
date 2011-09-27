@@ -30,9 +30,12 @@
     if(_compress == null) {
       _compress = true;
     }
+    if(_pos == null) {
+      _pos = -1;
+    }
     
     if(! _src) {
         throw new play.exceptions.TagInternalException("src attribute cannot be empty for press.script tag");
     }
 
-}%${ press.Plugin.addJS(_src, _compress) }
+}%${ press.Plugin.addJS(_src, _compress, _pos) }
