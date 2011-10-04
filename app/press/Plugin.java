@@ -102,7 +102,13 @@ public class Plugin extends PlayPlugin {
             if (performCompression()) {
                 result += compressor.add(fileName, compress, pos) + "\n";
             } else {
-                result += getScriptTag(baseUrl + fileName);
+            	String name = baseUrl + fileName;
+            	if (press.PluginConfig.cacheBuster){
+            		VirtualFile srcFile = checkJSFileExists(fileName, baseUrl);
+            		if (null != srcFile)
+            			name += "?" + srcFile.lastModified();
+            	}
+                result += getScriptTag(name);
             }
         }
 
@@ -125,7 +131,13 @@ public class Plugin extends PlayPlugin {
             if (performCompression()) {
                 result += compressor.add(fileName, compress, pos) + "\n";
             } else {
-                result += getLinkTag(baseUrl + fileName);
+            	String name = baseUrl + fileName;
+            	if (press.PluginConfig.cacheBuster){
+            		VirtualFile srcFile = checkJSFileExists(fileName, baseUrl);
+            		if (null != srcFile)
+            			name += "?" + srcFile.lastModified();
+            	}
+                result += getLinkTag(name);
             }
         }
 
