@@ -20,15 +20,12 @@ it doesn't have the hash in the local cache yet.
 The second issue is routing the files through a CDN. We want the CDN to automatically 
 re-fetch updated files without the need to manually refresh them on the CDN.
 
-* [.pod](http://search.cpan.org/dist/perl/pod/perlpod.pod) -- `Pod::Simple::HTML`
-  comes with Perl >= 5.10. Lower versions should install Pod::Simple from CPAN.
-
 Features
 --------
 
 ### Multiple Servers
 * Press supports a new operation mode - serverFarm. To enable it add in the conf file:
-  `press.serverFarm=true`
+  `press.serverFarm=true` .
   When this mode is set, Press won't use a hash in the requests for the compressed files. 
   Instead it will generate a file name consisting of the combined files and their time.
   Since this file name can be long, if it's too long it will break it to several files.
@@ -38,9 +35,9 @@ Features
   `#{press.script '/my.js', pos:1 /}`
 
 ### CDN Support
-* To route all press file requests through a CDN add:
-  `press.contentHostingDomain=http://my.cdn.host`
-* Press supports a new "cache buster" mode that will add the timestamp on file. To enable it
+* To route all press file requests through a CDN add to the conf file:
+  `press.contentHostingDomain=http://my.cdn.host` .
+* Press supports a new "cache buster" mode that will add the timestamp of the file as a request parameter. To enable it
   add in the conf file: `press.cacheBuster=true`
 * When cache buster mode is enabled, press will add the timestamp of the file to all requests 
   generated with the single-script tag (The combined scripts already include the file time).
