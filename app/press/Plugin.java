@@ -163,13 +163,13 @@ public class Plugin extends PlayPlugin {
          		if (pos > -1){
          			String first = requestKey.substring(0, pos) + ".css";
          			String rest = requestKey.substring(pos+1);
-         			String script = getScriptTag(getCompressedCSSUrl(first));
+         			String script = getLinkTag(getCompressedCSSUrl(first));
          			if(null == rest || rest.length() == 0)
          				return script;
          			return script + compressedCSSTag(rest);
          		}
          	}
-             return getScriptTag(getCompressedCSSUrl(requestKey));
+             return getLinkTag(getCompressedCSSUrl(requestKey));
          }
          return "";
     }
