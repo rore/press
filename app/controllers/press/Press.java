@@ -9,13 +9,10 @@ import java.util.Date;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-
 import play.Play;
 import play.exceptions.UnexpectedException;
 import play.mvc.Controller;
 import play.mvc.Http;
-import play.mvc.Http.Request;
-import play.mvc.Http.Response;
 import play.utils.Utils;
 import press.CSSCompressor;
 import press.CachingStrategy;
@@ -57,7 +54,12 @@ public class Press extends Controller {
         if (compressedFile == null) {
             renderBadResponse(type);
         }
-        
+
+        String contentType = "application/javascript; charset=utf-8";
+        if(type.equals("CSS")) {
+            contentType = "text/css; charset=utf-8";
+        }
+
         // check for last modified
         long l = compressedFile.lastModified();
     	final String etag = "\"" + l + "-" + compressedFile.originalHashCode() + "\"";
@@ -69,6 +71,8 @@ public class Press extends Controller {
                 	response.status = Http.StatusCode.NOT_MODIFIED;
                     if (eTag_) {
                     	response.setHeader("Etag", etag);
+                        response.setHeader("Content-Type", contentType);
+
                     }
                 }
                 return;
@@ -104,6 +108,7 @@ public class Press extends Controller {
         	response.setHeader("Cache-Control", "max-age=" + 31536000); // A year
         	response.setHeader("Expires", httpDateTimeFormatter.print(new DateTime().plusYears(1)));
         	response.setHeader("Last-Modified", Utils.getHttpDateFormatter().format(new Date(l + 1000)));
+            response.setHeader("Content-Type", contentType);
             if (eTag_) {
             	response.setHeader("Etag", etag);
             }
