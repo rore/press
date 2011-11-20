@@ -53,9 +53,9 @@ public class Plugin extends PlayPlugin {
             }
         } else {
         	if (null != dir && !dir.isEmpty())
-        		src = dir + fileName;
+        		src = (dir.equals("/") ? "" : dir) + fileName;
         	else
-        		src = compressor.srcDir + fileName;
+        		src = (compressor.srcDir.equals("/") ? "" : compressor.srcDir) + fileName;
         	if (press.PluginConfig.cacheBuster){
         		src += "?" + srcFile.lastModified();
         	}
@@ -80,7 +80,7 @@ public class Plugin extends PlayPlugin {
                 src = requestKey;
             }
         } else {
-            src = compressor.srcDir + fileName;
+            src = (compressor.srcDir.equals("/") ? "" : compressor.srcDir) + fileName;
         }
 
         return getLinkTag(src);
@@ -102,7 +102,7 @@ public class Plugin extends PlayPlugin {
             if (performCompression()) {
                 result += compressor.add(fileName, compress, pos) + "\n";
             } else {
-            	String name = baseUrl + fileName;
+            	String name = (baseUrl.equals("/") ? "" : baseUrl) + fileName;
             	if (press.PluginConfig.cacheBuster){
             		VirtualFile srcFile = checkJSFileExists(fileName, baseUrl);
             		if (null != srcFile)
@@ -131,7 +131,7 @@ public class Plugin extends PlayPlugin {
             if (performCompression()) {
                 result += compressor.add(fileName, compress, pos) + "\n";
             } else {
-            	String name = baseUrl + fileName;
+            	String name = (baseUrl.equals("/") ? "" : baseUrl) + fileName;
             	if (press.PluginConfig.cacheBuster){
             		VirtualFile srcFile = checkJSFileExists(fileName, baseUrl);
             		if (null != srcFile)
