@@ -68,11 +68,11 @@ public class Plugin extends PlayPlugin {
     /**
      * Add a single CSS file to compression
      */
-    public static String addSingleCSS(String fileName) {
-        checkCSSFileExists(fileName);
+    public static String addSingleCSS(String fileName, boolean compress) {
+        VirtualFile srcFile = checkCSSFileExists(fileName);
         CSSCompressor compressor = cssCompressor.get();
         String src = null;
-        if (performCompression()) {
+        if (compress && performCompression()) {
             String requestKey = compressor.compressedSingleFileUrl(fileName);
             if (PluginConfig.isInMemoryStorage()) {
                 src = getSingleCompressedCSSUrl(requestKey);
@@ -81,6 +81,9 @@ public class Plugin extends PlayPlugin {
             }
         } else {
             src = (compressor.srcDir.equals("/") ? "" : compressor.srcDir) + fileName;
+            if (press.PluginConfig.cacheBuster){
+        		src += "?" + srcFile.lastModified();
+        	}
         }
 
         return getLinkTag(src);
@@ -247,8 +250,8 @@ public class Plugin extends PlayPlugin {
     /**
      * Check if the given CSS file exists.
      */
-    public static void checkCSSFileExists(String fileName) {
-        CSSCompressor.checkCSSFileExists(fileName);
+    public static VirtualFile checkCSSFileExists(String fileName) {
+        return CSSCompressor.checkCSSFileExists(fileName);
     }
 
     /**
