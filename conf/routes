@@ -11,3 +11,4 @@ GET      /press/js/single/{key}  press.Press.getSingleCompressedJS
 GET      /press/css/clear        press.Press.clearCSSCache
 GET      /press/css/{key}        press.Press.getCompressedCSS
 GET      /press/css/single/{key} press.Press.getSingleCompressedCSS
+GET  	 /{<.*>path}.press       press.Press.handleVersionedFile

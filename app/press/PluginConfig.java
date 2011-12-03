@@ -47,6 +47,9 @@ public class PluginConfig {
         // Whether to append a cache buster (the file time) to the JS request 
         public static final boolean cacheBuster = false;
 
+        // Whether to use the query string when using the cache buster (only if cache buster is enabled). this doesn't work on all CDN providers. 
+        public static final boolean cacheBusterInQueryString = true;
+
         public static class js {
             // The directory where source javascript files are read from
             public static final String srcDir = "/public/javascripts/";
@@ -84,6 +87,7 @@ public class PluginConfig {
     public static String contentHostingDomain;
     public static boolean serverFarm;
     public static boolean cacheBuster;
+    public static boolean cacheBusterInQueryString;
     
     public static class js {
         public static String srcDir = DefaultConfig.js.srcDir;
@@ -131,6 +135,7 @@ public class PluginConfig {
         contentHostingDomain = ConfigHelper.getString("press.contentHostingDomain", DefaultConfig.contentHostingDomain);
         serverFarm = ConfigHelper.getBoolean("press.serverFarm", DefaultConfig.serverFarm);
         cacheBuster = ConfigHelper.getBoolean("press.cacheBuster", DefaultConfig.cacheBuster);
+        cacheBusterInQueryString = ConfigHelper.getBoolean("press.cacheBusterInQueryString", DefaultConfig.cacheBusterInQueryString);
 
         css.srcDir = ConfigHelper.getString("press.css.sourceDir", DefaultConfig.css.srcDir);
         css.compressedDir = ConfigHelper.getString("press.css.outputDir",

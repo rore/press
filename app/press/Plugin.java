@@ -6,6 +6,7 @@ import java.util.Map;
 import play.PlayPlugin;
 import play.mvc.Router;
 import play.vfs.VirtualFile;
+import press.Compressor.FileCompressor;
 import press.io.FileIO;
 import press.io.PressFileGlobber;
 
@@ -52,14 +53,8 @@ public class Plugin extends PlayPlugin {
                 src = requestKey;
             }
         } else {
-        	if (null != dir && !dir.isEmpty())
-        		src = (dir.equals("/") ? "" : dir) + fileName;
-        	else
-        		src = (compressor.srcDir.equals("/") ? "" : compressor.srcDir) + fileName;
-        	if (press.PluginConfig.cacheBuster){
-        		src += "?" + srcFile.lastModified();
-        	}
-
+        	if (null == dir || dir.isEmpty()) dir = compressor.srcDir;
+        	src = getVersionedFileKey(fileName, dir, srcFile);
         }
 
         return getScriptTag(src);
@@ -80,14 +75,50 @@ public class Plugin extends PlayPlugin {
                 src = requestKey;
             }
         } else {
-            src = (compressor.srcDir.equals("/") ? "" : compressor.srcDir) + fileName;
-            if (press.PluginConfig.cacheBuster){
-        		src += "?" + srcFile.lastModified();
-        	}
+        	src = getVersionedFileKey(fileName, compressor.srcDir, srcFile);
         }
 
         return getLinkTag(src);
     }
+
+    /**
+     * Add a versioned file name
+     */
+    public static String addVersionedFile(String fileName) {
+    	String src = getVersionedFileKey(fileName, null, null);
+    	if (PluginConfig.enabled && null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
+    		src = combinePath(press.PluginConfig.contentHostingDomain , src);
+        return src;
+    }
+
+    static String getVersionedFileKey(String fileName, String dir, VirtualFile srcFile) {
+        PressLogger.trace("Request for versioned file %s", fileName);
+    	if (null == srcFile)
+    		srcFile = FileIO.getVirtualFile(fileName);
+		fileName = combinePath(dir, fileName);
+        // if cache buster is disabled, or if we can use the query string, use the current file 
+    	if (!press.PluginConfig.cacheBuster || !PluginConfig.enabled){
+    		return fileName;
+    	}
+		if (press.PluginConfig.cacheBuster && press.PluginConfig.cacheBusterInQueryString){
+			return fileName += "?" + srcFile.lastModified();
+		}
+    	// we need to create a versioned request. we do that by appending the timestamp and the ".press" suffix to the file
+		fileName += "." + srcFile.lastModified() + ".press";
+		return fileName;
+    }
+
+    public static String combinePath(String path, String filename){
+    	if (null == path) return filename;
+    	if (null == filename) return path;
+    	if (path == "/") path = "";
+    	if (path.endsWith("/") && filename.startsWith("/"))
+    		filename = filename.substring(1);
+    	else if (!path.endsWith("/") && !filename.startsWith("/"))
+    		return path + "/" + filename;
+    	return path + filename;
+    }
+
 
     /**
      * Adds the given source file(s) to the JS compressor, returning the file
@@ -105,16 +136,11 @@ public class Plugin extends PlayPlugin {
             if (performCompression()) {
                 result += compressor.add(fileName, compress, pos) + "\n";
             } else {
-            	String name = (baseUrl.equals("/") ? "" : baseUrl) + fileName;
-            	if (press.PluginConfig.cacheBuster){
-            		VirtualFile srcFile = checkJSFileExists(fileName, baseUrl);
-            		if (null != srcFile)
-            			name += "?" + srcFile.lastModified();
-            	}
+            	VirtualFile srcFile = checkJSFileExists(fileName);
+            	String name = getVersionedFileKey(fileName, compressor.srcDir, srcFile);
                 result += getScriptTag(name);
             }
         }
-
         return result;
     }
 
@@ -134,12 +160,8 @@ public class Plugin extends PlayPlugin {
             if (performCompression()) {
                 result += compressor.add(fileName, compress, pos) + "\n";
             } else {
-            	String name = (baseUrl.equals("/") ? "" : baseUrl) + fileName;
-            	if (press.PluginConfig.cacheBuster){
-            		VirtualFile srcFile = checkJSFileExists(fileName, baseUrl);
-            		if (null != srcFile)
-            			name += "?" + srcFile.lastModified();
-            	}
+            	VirtualFile srcFile = checkCSSFileExists(fileName);
+            	String name = getVersionedFileKey(fileName, compressor.srcDir, srcFile);
                 result += getLinkTag(name);
             }
         }
@@ -311,7 +333,7 @@ public class Plugin extends PlayPlugin {
     private static String getScriptTag(String src) {
     	StringBuilder sb = new StringBuilder();
     	sb.append("<script src=\"");
-    	if (null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
+    	if (PluginConfig.enabled && null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
     		sb.append(press.PluginConfig.contentHostingDomain);
     	sb.append(src);
     	sb.append("\" type=\"text/javascript\" language=\"javascript\" charset=\"utf-8\"></script>\n");
@@ -325,7 +347,7 @@ public class Plugin extends PlayPlugin {
     private static String getLinkTag(String src) {
     	StringBuilder sb = new StringBuilder();
     	sb.append("<link href=\"");
-    	if (null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
+    	if (PluginConfig.enabled && null != press.PluginConfig.contentHostingDomain && press.PluginConfig.contentHostingDomain.length() > 0)
     		sb.append(press.PluginConfig.contentHostingDomain);
     	sb.append(src);
     	sb.append("\" rel=\"stylesheet\" type=\"text/css\" charset=\"utf-8\">");

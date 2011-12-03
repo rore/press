@@ -3,12 +3,14 @@ package press;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -98,13 +100,16 @@ public abstract class Compressor extends PlayPlugin {
     public String compressedSingleFileUrl(FileCompressor compressor, String fileName, String dir) {
         PressLogger.trace("Request to compress single file %s", fileName);
 
+        VirtualFile srcFile = checkFileExists(fileName, dir);
         int lastDot = fileName.lastIndexOf('.');
         String compressedFileName = fileName.substring(0, lastDot) + ".min";
+        if (press.PluginConfig.cacheBuster && !press.PluginConfig.cacheBusterInQueryString){
+        	compressedFileName += "." + srcFile.lastModified();
+        }
         compressedFileName += fileName.substring(lastDot);
 
         // The process for compressing a single file is the same as for a group
         // of files, the list just has a single entry
-        VirtualFile srcFile = checkFileExists(fileName, dir);
         List<FileInfo> componentFiles = new ArrayList<FileInfo>(1);
         componentFiles.add(new FileInfo(compressedFileName, true, srcFile, -1));
 
@@ -121,7 +126,7 @@ public abstract class Compressor extends PlayPlugin {
             writeCompressedFile(compressor, componentFiles, outputFile);
         }
 
-    	if (press.PluginConfig.cacheBuster){
+    	if (press.PluginConfig.cacheBuster && press.PluginConfig.cacheBusterInQueryString){
     		outputFilePath += "?" + srcFile.lastModified();
     	}
 
@@ -132,6 +137,51 @@ public abstract class Compressor extends PlayPlugin {
         return CompressedFile.create(requestKey);
     }
 
+
+    /*
+     * Used for creating a versioned file name
+     */
+    String combinePath(String path, String filename){
+    	if (null == path) return filename;
+    	if (null == filename) return path;
+    	if (path == "/") path = "";
+    	if (path.endsWith("/") && filename.startsWith("/"))
+    		filename = filename.substring(1);
+    	else if (!path.endsWith("/") && !filename.startsWith("/"))
+    		return path + "/" + filename;
+    	return path + filename;
+    }
+    
+    boolean copyFile(VirtualFile srcFile, VirtualFile destFile){
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+        	if(!destFile.exists()) {
+                destFile.getRealFile().createNewFile();
+            }
+            source = new FileInputStream(srcFile.getRealFile()).getChannel();
+            destination = new FileOutputStream(destFile.getRealFile()).getChannel();
+            destination.transferFrom(source, 0, source.size());
+            return true;
+        } catch (IOException e) {
+        	return false;
+		}
+        finally {
+            if(source != null) {
+                try {
+					source.close();
+				} catch (IOException e) {
+				}
+            }
+            if(destination != null) {
+                try {
+					destination.close();
+				} catch (IOException e) {
+				}
+            }
+        }
+    }
+    
     /**
      * Adds a file to the list of files to be compressed
      * 
